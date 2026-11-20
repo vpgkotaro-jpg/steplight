@@ -1,0 +1,3 @@
+{ "name": "StepLight", "short_name": "StepLight", "start_url": "./", "display": "standalone",
+  "background_color": "#f7f5f0", "theme_color": "#1f5fbf",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }] }

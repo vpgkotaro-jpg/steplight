@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>StepLight</title>
+<meta name="description" content="Turn an overwhelming task list into one clear next step. Keyboard and screen reader friendly, works offline, nothing leaves your device.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="bar">
+  <h1 class="logo"><span aria-hidden="true">◐</span> StepLight</h1>
+  <nav aria-label="Sections">
+    <button type="button" class="tab" data-view="dump" aria-current="page">1 Dump</button>
+    <button type="button" class="tab" data-view="pick">2 Pick</button>
+    <button type="button" class="tab" data-view="focus">3 Focus</button>
+    <button type="button" class="tab" data-view="settings">Settings</button>
+  </nav>
+</header>
+
+<div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<main id="main" tabindex="-1">
+  <div id="resume" class="resume" hidden>
+    <h2>Welcome back</h2>
+    <p>Last time you stopped at: <strong id="resumeTask"></strong></p>
+    <p>Your note: <span id="resumeNote"></span></p>
+    <div class="row">
+      <button type="button" id="resumeGo" class="primary">Pick up where I left off</button>
+      <button type="button" id="resumeDismiss">Not now</button>
+    </div>
+  </div>
+
+  <section id="view-dump" class="view" aria-labelledby="h-dump">
+    <h2 id="h-dump">Empty your head</h2>
+    <p class="hint">Paste or type everything that is on your mind. Messy is fine: bullets, numbers, checkboxes, commas and "then" are all understood. Finished items marked <code>[x]</code> are skipped.</p>
+    <label for="dump" class="label">Everything on your mind</label>
+    <textarea id="dump" rows="9" spellcheck="true" placeholder="- email Ms. Tan about the group project by Fri&#10;- read chapter 4, then write the summary&#10;- laundry&#10;- book dentist appointment!!"></textarea>
+    <div class="row">
+      <button type="button" id="parseBtn" class="primary">Make my list</button>
+      <button type="button" id="sampleBtn">Try an example</button>
+    </div>
+  </section>
+
+  <section id="view-pick" class="view" aria-labelledby="h-pick" hidden>
+    <h2 id="h-pick">Pick one thing</h2>
+    <p class="hint">Suggested order: urgent first, then things with a day attached, then your own order. You choose. Press <kbd>Enter</kbd> on a task to start it.</p>
+    <p id="emptyPick" class="empty">No tasks yet. Go to <button type="button" class="link" data-goto="dump">Dump</button> first.</p>
+    <ol id="taskList" class="tasks" aria-label="Tasks"></ol>
+    <form id="addForm" class="row" autocomplete="off">
+      <label for="addInput" class="sr-only">Add a task</label>
+      <input id="addInput" type="text" maxlength="200" placeholder="Add one more task">
+      <button type="submit">Add</button>
+    </form>
+  </section>
+
+  <section id="view-focus" class="view" aria-labelledby="h-focus" hidden>
+    <h2 id="h-focus" class="sr-only">Focus</h2>
+    <p id="emptyFocus" class="empty">Pick a task first. <button type="button" class="link" data-goto="pick">Go to Pick</button></p>
+    <div id="focusBox" hidden>
+      <p class="task-name">Task: <span id="focusTask"></span></p>
+      <p class="step-label">Your next step</p>
+      <p id="focusStep" class="step" tabindex="-1"></p>
+      <div class="row">
+        <button type="button" id="doneBtn" class="primary">Done <kbd>D</kbd></button>
+        <button type="button" id="smallerBtn">Too big, make it smaller <kbd>S</kbd></button>
+        <button type="button" id="pauseBtn">Pause with a note <kbd>P</kbd></button>
+      </div>
+      <form id="stepForm" class="stepform" hidden autocomplete="off">
+        <label for="stepInput" class="label">What is the very first physical action? Something you could start in 10 seconds.</label>
+        <input id="stepInput" type="text" maxlength="160">
+        <div class="row">
+          <button type="submit" class="primary">Use this step</button>
+          <button type="button" id="stepCancel">Cancel</button>
+        </div>
+      </form>
+      <form id="pauseForm" class="stepform" hidden autocomplete="off">
+        <label for="pauseInput" class="label">Note to future you: where did you stop, and what comes next?</label>
+        <textarea id="pauseInput" rows="3" maxlength="400"></textarea>
+        <div class="row">
+          <button type="submit" class="primary">Save and stop</button>
+          <button type="button" id="pauseCancel">Keep going</button>
+        </div>
+      </form>
+      <div class="timer" role="group" aria-labelledby="timerLabel">
+        <p id="timerLabel" class="label">Optional timer</p>
+        <div class="row">
+          <button type="button" class="t" data-min="2">2 min</button>
+          <button type="button" class="t" data-min="10">10 min</button>
+          <button type="button" class="t" data-min="25">25 min</button>
+          <button type="button" id="timerStop" hidden>Stop timer</button>
+        </div>
+        <p id="timerOut" class="timer-out" aria-hidden="true"></p>
+      </div>
+      <p class="hint">Steps done today: <strong id="doneCount">0</strong>. Finishing the whole task is not required. Starting counts.</p>
+      <button type="button" id="taskDoneBtn">The whole task is finished</button>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view" aria-labelledby="h-settings" hidden>
+    <h2 id="h-settings">Settings</h2>
+    <fieldset>
+      <legend>Reading</legend>
+      <label class="check"><input type="checkbox" id="setLarge"> Larger text</label>
+      <label class="check"><input type="checkbox" id="setSpacing"> Extra letter and line spacing</label>
+      <label class="check"><input type="checkbox" id="setContrast"> High contrast</label>
+      <label class="check"><input type="checkbox" id="setMotion"> Reduce motion (also follows your system setting)</label>
+    </fieldset>
+    <fieldset>
+      <legend>Timer</legend>
+      <label class="check"><input type="checkbox" id="setAnnounce" checked> Announce time left every 5 minutes to screen readers</label>
+      <label class="check"><input type="checkbox" id="setChime"> Soft sound when the timer ends</label>
+    </fieldset>
+    <fieldset>
+      <legend>Your data</legend>
+      <p class="hint">Everything is stored only in this browser. No account, no server, no tracking.</p>
+      <div class="row">
+        <button type="button" id="exportBtn">Download my list as text</button>
+        <button type="button" id="wipeBtn" class="danger">Delete all data</button>
+      </div>
+    </fieldset>
+    <h3>Keyboard</h3>
+    <ul class="keys">
+      <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> switch sections</li>
+      <li><kbd>D</kbd> step done, <kbd>S</kbd> make it smaller, <kbd>P</kbd> pause with a note (in Focus)</li>
+      <li><kbd>↑</kbd> <kbd>↓</kbd> move between tasks, <kbd>Enter</kbd> start a task, <kbd>Delete</kbd> remove it (in Pick)</li>
+    </ul>
+  </section>
+</main>
+<footer class="foot">StepLight · MIT License · works offline · nothing leaves your device</footer>
+<script src="parse.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
