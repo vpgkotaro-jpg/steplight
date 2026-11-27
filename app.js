@@ -3,9 +3,9 @@
   const P = window.StepLightParse;
   const KEY = 'steplight.v1';
   const $ = id => document.getElementById(id);
-  const today = () => new Date().toISOString().slice(0, 10);
+  const today = () => P.dayKey(new Date());
 
-  const fresh = () => ({ tasks: [], current: null, step: '', doneCount: 0, doneDate: today(), pause: null,
+  const fresh = () => ({ tasks: [], current: null, step: '', doneCount: 0, doneDate: today(), pause: null, log: [],
     settings: { large: false, spacing: false, contrast: false, motion: false, announce: true, chime: false } });
   let S;
   try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || 'null') || {}); } catch (e) { S = fresh(); }
@@ -125,16 +125,47 @@
     $('focusStep').textContent = S.step;
     $('doneCount').textContent = S.doneCount;
     $('stepForm').hidden = true; $('pauseForm').hidden = true;
+    renderLog();
   }
+  // Today's finished steps, so the day can be looked back on, not only counted.
+  function renderLog() {
+    const list = $('doneLog');
+    list.textContent = '';
+    const todays = (S.log || []).filter(x => x && P.dayKey(x.at) === today());
+    $('logEmpty').hidden = todays.length > 0;
+    todays.forEach(x => {
+      const li = document.createElement('li');
+      const time = new Date(x.at);
+      const hh = String(time.getHours()).padStart(2, '0') + ':' + String(time.getMinutes()).padStart(2, '0');
+      li.textContent = hh + '  ' + x.step + '  (' + x.task + ')';
+      list.appendChild(li);
+    });
+  }
+  // Low-energy day: keep the step to two minutes and start the timer at once.
+  $('lowBtn').addEventListener('click', () => {
+    const t = S.current && task(S.current);
+    if (!t) return;
+    S.step = P.lowEnergyStep(t.text); save();
+    renderFocus();
+    startTimer(2);
+    $('focusStep').focus();
+    say('Two minutes only. ' + S.step);
+  });
   function stepDone() {
     if (!S.current) return;
-    S.doneCount++; save();
+    const t = task(S.current);
+    S.doneCount++;
+    if (!Array.isArray(S.log)) S.log = [];
+    S.log.push({ task: t ? t.text : '', step: S.step, at: new Date().toISOString() });
+    S.log = S.log.slice(-100);
+    save();
     $('doneCount').textContent = S.doneCount;
+    renderLog();
     $('stepForm').hidden = false; $('pauseForm').hidden = true;
     $('stepInput').value = '';
     $('stepInput').placeholder = 'Next small step, for example: write the second paragraph';
     $('stepInput').focus();
-    say('Step done. ' + S.doneCount + ' today. Type the next small step, or press the whole task is finished.');
+    say('Step done. ' + S.doneCount + ' today. Type the next small step, or choose The whole task is finished when this task is done.');
   }
   function smaller() {
     if (!S.current) return;

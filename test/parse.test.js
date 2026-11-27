@@ -35,6 +35,23 @@ test('starter steps are concrete and have a fallback', () => {
   assert.match(P.starterStep('Write cover letter'), /title/);
   assert.match(P.starterStep('Something unusual'), /2 minutes/);
 });
+test('lowEnergyStep names the task, keeps it small, and allows stopping', () => {
+  const s = P.lowEnergyStep('Write the second paragraph');
+  assert.match(s, /^Spend only 2 minutes on: write the second paragraph\. /);
+  assert.match(s, /Stopping after that is allowed\.$/);
+  assert.match(P.lowEnergyStep('   '), /^Spend only 2 minutes on it\./);
+  assert.match(P.lowEnergyStep(null), /Stopping after that is allowed\.$/);
+});
+test('dayKey uses the local calendar day, so early morning is not the previous day', () => {
+  // Local-time constructors make these checks independent of the machine's zone.
+  assert.strictEqual(P.dayKey(new Date(2026, 10, 22, 8, 0)), '2026-11-22');
+  assert.strictEqual(P.dayKey(new Date(2026, 10, 22, 9, 30)), '2026-11-22');
+  assert.strictEqual(P.dayKey(new Date(2026, 10, 22, 0, 30)), '2026-11-22');
+  assert.strictEqual(P.dayKey(new Date(2026, 10, 21, 23, 59)), '2026-11-21');
+  // A stored ISO timestamp (UTC string) maps back to the same local day it was made on.
+  assert.strictEqual(P.dayKey(new Date(new Date(2026, 10, 22, 8, 0).toISOString())), '2026-11-22');
+  assert.strictEqual(P.dayKey('not a date'), '');
+});
 test('handles non-string and empty input', () => {
   assert.deepStrictEqual(P.parseDump(null), []);
   assert.deepStrictEqual(P.parseDump('   \n  '), []);

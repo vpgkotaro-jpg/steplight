@@ -69,6 +69,7 @@
         <button type="button" id="doneBtn" class="primary">Done <kbd>D</kbd></button>
         <button type="button" id="smallerBtn">Too big, make it smaller <kbd>S</kbd></button>
         <button type="button" id="pauseBtn">Pause with a note <kbd>P</kbd></button>
+        <button type="button" id="lowBtn">Low energy: only 2 minutes</button>
       </div>
       <form id="stepForm" class="stepform" hidden autocomplete="off">
         <label for="stepInput" class="label">What is the very first physical action? Something you could start in 10 seconds.</label>
@@ -97,6 +98,11 @@
         <p id="timerOut" class="timer-out" aria-hidden="true"></p>
       </div>
       <p class="hint">Steps done today: <strong id="doneCount">0</strong>. Finishing the whole task is not required. Starting counts.</p>
+      <section class="log-section" aria-labelledby="h-log">
+        <h3 id="h-log" class="step-label">Today's steps</h3>
+        <p id="logEmpty" class="empty" hidden>Nothing finished yet today. One small step is enough.</p>
+        <ul id="doneLog" class="log"></ul>
+      </section>
       <button type="button" id="taskDoneBtn">The whole task is finished</button>
     </div>
   </section>

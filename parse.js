@@ -68,7 +68,23 @@
     return 'Spend 2 minutes on it. Stopping after that is allowed.';
   }
 
-  const api = { parseDump, suggestOrder, starterStep };
+  // Step for a low-energy day: the task is allowed to stay small.
+  function lowEnergyStep(text) {
+    const t = String(text == null ? '' : text).trim().replace(/\s+/g, ' ');
+    if (!t) return 'Spend only 2 minutes on it. Stopping after that is allowed.';
+    return 'Spend only 2 minutes on: ' + t.charAt(0).toLowerCase() + t.slice(1) + '. Stopping after that is allowed.';
+  }
+
+  // Calendar day (YYYY-MM-DD) in the device's local time zone. Not UTC: in Japan
+  // 00:00-09:00 is still the previous UTC day, which would drop today's steps early.
+  function dayKey(value) {
+    const d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return '';
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  const api = { parseDump, suggestOrder, starterStep, lowEnergyStep, dayKey };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.StepLightParse = api;
 })(typeof self !== 'undefined' ? self : this);
